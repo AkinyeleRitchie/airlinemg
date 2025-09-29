@@ -4,15 +4,17 @@ import tkinter.messagebox as messagebox
 import sqlite3
 import os
 import pygame
-from PIL import ImageTk,Image
 import random
 
-
-# Initialize SQLite database
+# ==========================
+# DATABASE INITIALIZATION
+# ==========================
 def setup_database():
+    """Create the airline management database and tables if they do not exist."""
     conn = sqlite3.connect('airline_management.db')
     cursor = conn.cursor()
-    
+
+    # Create flights table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS flights (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,8 +25,8 @@ def setup_database():
             arrival_time VARCHAR NOT NULL
         )
     ''')
-    
-     # Create passengers table
+
+    # Create passengers table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS passengers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,7 +37,7 @@ def setup_database():
             contact_info TEXT NOT NULL
         )
     ''')
-    
+
     # Create bookings table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS bookings (
@@ -47,82 +49,124 @@ def setup_database():
             FOREIGN KEY(flight_id) REFERENCES flights(id)
         )
     ''')
-    
+
     conn.commit()
     conn.close()
 
+# Run DB setup at program start
 setup_database()
-    
-# Text-to-Speech function
+
+
+# ==========================
+# TEXT-TO-SPEECH FUNCTION
+# ==========================
 def text_to_speech(text):
-    tts = gTTS(text=text, lang='en')
-    audio_file = "flight_info.mp3"
-    tts.save(audio_file)
-    
-    pygame.mixer.init()
-    pygame.mixer.music.load(audio_file)
-    pygame.mixer.music.play()
-    
-    while pygame.mixer.music.get_busy():  # Wait until the audio finishes playing
-        continue
-    
-    pygame.mixer.quit()  # Properly quit the mixer
-    os.remove(audio_file)  # Remove the audio file after playing
+    """
+    Converts given text into speech and plays it using pygame.
+    The temporary MP3 file is deleted after playback.
+    """
+    try:
+        tts = gTTS(text=text, lang='en')
+        audio_file = "flight_info.mp3"
+        tts.save(audio_file)
+
+        pygame.mixer.init()
+        pygame.mixer.music.load(audio_file)
+        pygame.mixer.music.play()
+
+        while pygame.mixer.music.get_busy():  # Wait until the audio finishes
+            continue
+
+        pygame.mixer.quit()
+        os.remove(audio_file)
+    except Exception as e:
+        messagebox.showerror("TTS Error", f"Could not play audio: {e}")
 
 
-
-# function to save passenger info
+# ==========================
+# PASSENGER MANAGEMENT
+# ==========================
 def save_passenger():
-    # Get the input values from the entry fields
+    """Save passenger details into the database."""
+    # Retrieve values from input fields
     name = name_entry.get()
     age = age_entry.get()
     gender = gender_entry.get()
     passport_number = passport_number_entry.get()
     contact_info = contact_info_entry.get()
 
-    # Ensure all fields are filled
-    if (name=="" or age=="" or gender=="" or passport_number=="" or contact_info==""):
-        messagebox.showinfo("Alert", "Please fill in all the fields.")
+    # Validation check
+    if not all([name, age, gender, passport_number, contact_info]):
+        messagebox.showwarning("Input Error", "Please fill in all fields.")
         return
 
-    # to connect to the database
     conn = sqlite3.connect('airline_management.db')
     cursor = conn.cursor()
 
-    # to check if the passport number already exists
-    cursor.execute('''
-        SELECT COUNT(*) FROM passengers WHERE passport_number = ?
-    ''', (passport_number,))
+    # Check if passport number already exists
+    cursor.execute("SELECT COUNT(*) FROM passengers WHERE passport_number = ?", (passport_number,))
     exists = cursor.fetchone()[0]
 
     if exists:
-        messagebox.showerror("Error", "A passenger with this passport number already exists.")
+        messagebox.showerror("Duplicate Entry", "A passenger with this passport number already exists.")
     else:
         cursor.execute('''
             INSERT INTO passengers (name, age, gender, passport_number, contact_info)
             VALUES (?, ?, ?, ?, ?)
         ''', (name, age, gender, passport_number, contact_info))
-
         conn.commit()
         messagebox.showinfo("Success", f"Passenger {name} added successfully.")
-        name_entry.delete(0, END)
-        age_entry.delete(0, END)
-        gender_entry.delete(0, END)
-        contact_info_entry.delete(0, END)
-    
+        
+        # Optional: Announce passenger registration using TTS
+        text_to_speech(f"Passenger {name} has been added successfully.")
+
+        clear_passenger_fields()
+
     conn.close()
-    
+
+
+def clear_passenger_fields():
+    """Clears passenger input fields after saving."""
+    name_entry.delete(0, END)
+    age_entry.delete(0, END)
+    gender_entry.delete(0, END)
+    passport_number_entry.delete(0, END)
+    contact_info_entry.delete(0, END)
+
+
+# ==========================
+# BOOKING MANAGEMENT
+# ==========================
 def generate_seat_number():
-    seat_number = f"{random.randint(1, 150):03d}-"  # Generate seat number between 001 and 150
-    seat_row = random.choice(['A', 'B', 'C', 'D'])  # Randomly select a row
-    return seat_number + seat_row
+    """Generate a random seat number in the format '001-A'."""
+    seat_number = f"{random.randint(1, 150):03d}"
+    seat_row = random.choice(['A', 'B', 'C', 'D'])
+    return f"{seat_number}-{seat_row}"
+
 
 def book_flight(passenger_id, flight_id):
-    # Connect to the database
+    """Book a passenger on a flight if not already booked."""
     conn = sqlite3.connect('airline_management.db')
     cursor = conn.cursor()
 
-# Check if the passenger_id is already booked for the given flight_id
+    # Verify passenger and flight IDs exist
+    cursor.execute("SELECT COUNT(*) FROM passengers WHERE id = ?", (passenger_id,))
+    passenger_exists = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM flights WHERE id = ?", (flight_id,))
+    flight_exists = cursor.fetchone()[0]
+
+    if not passenger_exists:
+        messagebox.showerror("Error", "Passenger ID does not exist.")
+        conn.close()
+        return
+
+    if not flight_exists:
+        messagebox.showerror("Error", "Flight ID does not exist.")
+        conn.close()
+        return
+
+    # Check if passenger already booked
     cursor.execute('''
         SELECT COUNT(*) FROM bookings
         WHERE passenger_id = ? AND flight_id = ?
@@ -132,86 +176,80 @@ def book_flight(passenger_id, flight_id):
     if already_booked:
         messagebox.showwarning("Booking Error", "This passenger is already booked on this flight.")
     else:
-        # Generate a random seat number only if booking is valid
         seat_number = generate_seat_number()
-        
-        # Insert the booking data into the bookings table
         cursor.execute('''
             INSERT INTO bookings (passenger_id, flight_id, seat_number)
             VALUES (?, ?, ?)
         ''', (passenger_id, flight_id, seat_number))
+        conn.commit()
+        messagebox.showinfo("Success", f"Flight booked successfully! Seat number: {seat_number}")
 
-    # Commit the changes
-    conn.commit()
-    messagebox.showinfo("Success", f"Flight booked successfully! Seat number: {seat_number}")
+        # Optional: Announce booking
+        text_to_speech(f"Passenger {passenger_id} booked successfully on flight {flight_id}. Seat number {seat_number}.")
 
-    passport_number_entry.delete(0, END)
+        clear_booking_fields()
+
+    conn.close()
+
+
+def submit_booking():
+    """Handles the booking button click."""
+    passenger_id = passenger_id_entry.get()
+    flight_id = flight_id_entry.get()
+
+    if not passenger_id.isdigit() or not flight_id.isdigit():
+        messagebox.showwarning("Input Error", "Please enter valid numeric IDs.")
+        return
+
+    book_flight(int(passenger_id), int(flight_id))
+
+
+def clear_booking_fields():
+    """Clear booking input fields after successful booking."""
     passenger_id_entry.delete(0, END)
     flight_id_entry.delete(0, END)
 
 
-    # Close the connection
-    conn.close()
-    
-def submit_booking():
-        try:
-            passenger_id = passenger_id_entry.get()
-            flight_id = flight_id_entry.get()
-            book_flight(passenger_id, flight_id)
-        except ValueError:
-            messagebox.showwarning("Input Error", "Please enter valid numeric IDs.")
-
-# Initialize the Tkinter GUI
+# ==========================
+# GUI SETUP
+# ==========================
 root = Tk()
 root.title("Airline Management System")
+root.geometry("1200x720")
 
+# Left-side frame for inputs
 left_frame = Frame(root, width=400, height=600, bg="lightblue")
 left_frame.pack(side=LEFT, fill=BOTH, expand=True)
 
-# LEFT SIDE
+# Heading
+Label(left_frame, text="Passenger Management", font=("Arial", 20, "bold"), bg="lightblue").place(x=170, y=100)
 
+# Passenger input fields
+Label(left_frame, text="Passenger Name", bg="lightblue").place(x=190, y=167)
+name_entry = Entry(left_frame); name_entry.place(x=330, y=170)
 
+Label(left_frame, text="Passenger Age", bg="lightblue").place(x=190, y=217)
+age_entry = Entry(left_frame); age_entry.place(x=330, y=220)
 
+Label(left_frame, text="Passenger Gender", bg="lightblue").place(x=190, y=267)
+gender_entry = Entry(left_frame); gender_entry.place(x=330, y=270)
 
+Label(left_frame, text="Passport Number", bg="lightblue").place(x=190, y=317)
+passport_number_entry = Entry(left_frame); passport_number_entry.place(x=330, y=320)
 
-right_heading_label = Label(left_frame, text="Passenger Management", font=("Arial", 20, "bold"), bg="lightblue")
-right_heading_label.place(x=170, y=100)
+Label(left_frame, text="Contact Info", bg="lightblue").place(x=190, y=367)
+contact_info_entry = Entry(left_frame); contact_info_entry.place(x=330, y=370)
 
-# put passenger input fields
-Label(left_frame, text="Passenger Name", font=("Calibri", 12, "bold"), bg="lightblue").place(x=190, y=167)
-name_entry = Entry(left_frame)
-name_entry.place(x=330, y=170)
+# Booking input fields
+Label(left_frame, text="Passenger ID", bg="lightblue").place(x=190, y=457)
+passenger_id_entry = Entry(left_frame); passenger_id_entry.place(x=330, y=460)
 
-Label(left_frame, text="Passenger Age", font=("Calibri", 12, "bold"), bg="lightblue").place(x=190, y=217)
-age_entry = Entry(left_frame)
-age_entry.place(x=330, y=220)
+Label(left_frame, text="Flight ID", bg="lightblue").place(x=190, y=507)
+flight_id_entry = Entry(left_frame); flight_id_entry.place(x=330, y=510)
 
-Label(left_frame, text="Passenger Gender", font=("Calibri", 12, "bold"), bg="lightblue").place(x=190, y=267)
-gender_entry = Entry(left_frame)
-gender_entry.place(x=330, y=270)
+# Buttons
+Button(left_frame, text="Save Passenger", command=save_passenger, bg="green", fg="white").place(x=330, y=410)
+Button(left_frame, text="Book Flight", command=submit_booking, fg="green", bg="white").place(x=330, y=550)
 
-Label(left_frame, text="Passport Number", font=("Calibri", 12, "bold"), bg="lightblue").place(x=190, y=317)
-passport_number_entry = Entry(left_frame)
-passport_number_entry.place(x=330, y=320)
-
-Label(left_frame, text="Contact Info", font=("Calibri", 12, "bold"), bg="lightblue").place(x=190, y=367)
-contact_info_entry = Entry(left_frame)
-contact_info_entry.place(x=330, y=370)
-
-Label(left_frame, text="Passenger ID", font=("Calibri", 12, "bold"), bg="lightblue").place(x=190, y=457)
-passenger_id_entry = Entry(left_frame)
-passenger_id_entry.place(x=330, y=460)
-
-Label(left_frame, text="flight ID", font=("Calibri", 12, "bold"), bg="lightblue").place(x=190, y=507)
-flight_id_entry = Entry(left_frame)
-flight_id_entry.place(x=330, y=510)
-
-save_button = Button(left_frame, text="Save", command=save_passenger, bg="green", fg="white")
-save_button.place(x=330, y=410)
-
-book_button = Button(left_frame, text="Book flight", command=submit_booking, fg="green", bg="white")
-book_button.place(x=330, y=550)
-
-
-root.geometry("1200x720")
+# Run GUI loop
 root.mainloop()
