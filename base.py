@@ -1,9 +1,31 @@
+# ----------------------------------------
+# Airline Management Database Setup Script
+# ----------------------------------------
+# This script initializes the SQLite database for
+# the Airline Management System.
+#
+# It creates three tables:
+# 1. flights   - Stores flight details
+# 2. passengers - Stores passenger information
+# 3. bookings  - Stores passenger bookings for flights
+#
+# Running this script ensures that the database is ready
+# before launching the main application.
+# ----------------------------------------
+
 import sqlite3
 
+
 def setup_database():
+    """Create the SQLite database with flights, passengers, and bookings tables."""
+    
+    # Connect to (or create) the database file
     conn = sqlite3.connect('airline_management.db')
     cursor = conn.cursor()
     
+    # ------------------------
+    # Create flights table
+    # ------------------------
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS flights (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -15,7 +37,9 @@ def setup_database():
         )
     ''')
      
+    # ------------------------
     # Create passengers table
+    # ------------------------
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS passengers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,7 +51,9 @@ def setup_database():
         )
     ''')
     
+    # ------------------------
     # Create bookings table
+    # ------------------------
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,7 +65,12 @@ def setup_database():
         )
     ''')
     
+    # Commit changes and close connection
     conn.commit()
     conn.close()
+    print("✅ Database setup complete! Tables are ready.")
 
-setup_database()
+
+# Run setup when script is executed
+if __name__ == "__main__":
+    setup_database()
