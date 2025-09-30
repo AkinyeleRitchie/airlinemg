@@ -1,0 +1,97 @@
+import tkinter as tk
+from tkinter import messagebox
+import sqlite3
+
+# Database setup
+def setup_database():
+    conn = sqlite3.connect('airline_management.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            first_name TEXT NOT NULL,
+            last_name TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            position TEXT NOT NULL,
+            password TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Function to handle signup logic
+def signup():
+    first_name = entry_first_name.get()
+    last_name = entry_last_name.get()
+    email = entry_email.get()
+    position = entry_position.get()
+    password = entry_password.get()
+
+    if first_name == "" or last_name == "" or email == "" or position == "" or password == "":
+        messagebox.showwarning("Input Error", "Please fill all fields")
+        return
+
+    conn = sqlite3.connect('airline_management.db')
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute('''
+            INSERT INTO users (first_name, last_name, email, position, password) 
+            VALUES (?, ?, ?, ?, ?)
+        ''', (first_name, last_name, email, position, password))
+
+        conn.commit()
+        messagebox.showinfo("Success", "User registered successfully")
+        clear_fields()
+    except sqlite3.IntegrityError:
+        messagebox.showerror("Error", "Email already exists")
+    finally:
+        conn.close()
+
+# Function to clear input fields after signup
+def clear_fields():
+    entry_first_name.delete(0, tk.END)
+    entry_last_name.delete(0, tk.END)
+    entry_email.delete(0, tk.END)
+    entry_position.delete(0, tk.END)
+    entry_password.delete(0, tk.END)
+
+# Main application setup
+def main_app():
+    global entry_first_name, entry_last_name, entry_email, entry_position, entry_password
+
+    root = tk.Tk()
+    root.title("Airline Management Signup")
+    root.geometry("400x400")
+
+    # Labels and entry fields
+    tk.Label(root, text="First Name").pack(pady=5)
+    entry_first_name = tk.Entry(root)
+    entry_first_name.pack(pady=5)
+
+    tk.Label(root, text="Last Name").pack(pady=5)
+    entry_last_name = tk.Entry(root)
+    entry_last_name.pack(pady=5)
+
+    tk.Label(root, text="Email").pack(pady=5)
+    entry_email = tk.Entry(root)
+    entry_email.pack(pady=5)
+
+    tk.Label(root, text="Position (Flight Attendant/Admin)").pack(pady=5)
+    entry_position = tk.Entry(root)
+    entry_position.pack(pady=5)
+
+    tk.Label(root, text="Password").pack(pady=5)
+    entry_password = tk.Entry(root, show='*')
+    entry_password.pack(pady=5)
+
+    # Signup button
+    signup_button = tk.Button(root, text="Sign Up", command=signup)
+    signup_button.pack(pady=20)
+
+    root.mainloop()
+
+# Initialize the database and start the application
+if __name__ == "__main__":
+    setup_database()
+    main_app()
