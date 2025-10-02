@@ -1,6 +1,6 @@
-# ---------------------------------------------------
+# ----------------------------------------------
 # Airline Management System - Signup & Login
-# ---------------------------------------------------
+# ----------------------------------------------
 # This script handles:
 # 1. User signup (Admin / Flight Attendant)
 # 2. User login (redirects to the correct panel)
@@ -9,7 +9,7 @@
 # After a successful login:
 #   - Admins -> open admin.py
 #   - Flight Attendants -> open flight.py
-# ---------------------------------------------------
+# ----------------------------------------------
 
 import tkinter as tk
 from tkinter import messagebox
