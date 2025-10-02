@@ -4,9 +4,9 @@ import sqlite3
 import subprocess  # To run the main.py file after successful login
 
 
-# ==============================
+# =============================
 # DATABASE SETUP
-# ==============================
+# =============================
 def setup_database():
     """
     Creates the airline_manage.db SQLite database (if it doesn't exist).
