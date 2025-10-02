@@ -7,7 +7,7 @@
 # - GUI built with Tkinter
 # - Text-to-Speech announcements using gTTS + pygame
 # - Can be extended later for passengers & bookings
-# -------------------------------
+# ---------------------------
 
 from gtts import gTTS
 from tkinter import *
