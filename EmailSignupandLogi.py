@@ -1,6 +1,6 @@
-# ----------------------------------------------
+# ---------------------------------------------
 # Airline Management System - Signup & Login
-# ----------------------------------------------
+# ---------------------------------------------
 # This script handles:
 # 1. User signup (Admin / Flight Attendant)
 # 2. User login (redirects to the correct panel)
