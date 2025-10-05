@@ -1,6 +1,6 @@
-# -------------------------------
+# ------------------------------
 # Airline Management System (Admin Panel)
-# -------------------------------
+# ------------------------------
 # Features:
 # - Add, Search, Update, and Delete Flights
 # - Uses SQLite for persistent storage
