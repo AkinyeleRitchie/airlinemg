@@ -1,6 +1,6 @@
-# -----------------------------------------
+# ----------------------------------------
 # Airline Management System - User Signup GUI
-# -----------------------------------------
+# ----------------------------------------
 # Features:
 # - Uses SQLite for user storage
 # - Signup form with First Name, Last Name, Email, Position, Password
