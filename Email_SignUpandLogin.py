@@ -3,9 +3,9 @@ from tkinter import messagebox
 import sqlite3
 
 
-# =============================
+# ============================
 # DATABASE SETUP
-# =============================
+# ============================
 def setup_database():
     """
     Create the database file (airline_management.db) if it doesn't exist.
