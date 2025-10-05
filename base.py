@@ -1,6 +1,6 @@
-# ----------------------------------------
+# ---------------------------------------
 # Airline Management Database Setup Script
-# ----------------------------------------
+# ---------------------------------------
 # This script initializes the SQLite database for
 # the Airline Management System.
 #
