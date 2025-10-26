@@ -1,4 +1,3 @@
-#
 from gtts import gTTS
 from tkinter import *
 import tkinter.messagebox as messagebox
@@ -8,8 +7,7 @@ import pygame
 from PIL import ImageTk,Image
 import random
 
-
-# Initialize SQLite database
+# Initialize SQLite database.
 def setup_database():
     conn = sqlite3.connect('airline_management.db')
     cursor = conn.cursor()
