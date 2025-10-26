@@ -6,15 +6,16 @@ import os
 import pygame
 import random
 
-# ========================
+
+# =======================
 # DATABASE INITIALIZATION
-# ========================
+# =======================
 def setup_database():
     """Create the airline management database and tables if they do not exist."""
     conn = sqlite3.connect('airline_management.db')
     cursor = conn.cursor()
 
-    # Create flights table
+    # Create flights table.
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS flights (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
