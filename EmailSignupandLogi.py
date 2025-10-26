@@ -1,4 +1,3 @@
-
 # ---------------------------------------------
 # Airline Management System - Signup & Login
 # ---------------------------------------------
@@ -11,6 +10,7 @@
 #   - Admins -> open admin.py
 #   - Flight Attendants -> open flight.py
 # ----------------------------------------------
+
 
 import tkinter as tk
 from tkinter import messagebox
