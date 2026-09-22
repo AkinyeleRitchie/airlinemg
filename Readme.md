@@ -34,4 +34,16 @@ This project is a **Tkinter-based Airline Management System** designed for admin
 ---
 
 ## 📂 Project Structure
+- `main.py` / `mainn.py` - Entry points for running the application.
+- `Admin.py` - Handles administrative workflows and permissions.
+- `Flight.py` - Manages flight-related logic and data structures.
+- `Email_Signup.py` / `EmailSignupandLogin.py` - Manages authentication modules.
+- `tts.py` - Text-to-speech functionality.
+- `*.db` - Local databases used for data storage.
 
+## Getting Started
+1. Clone the repository.
+2. Ensure you have Python installed.
+3. Run the application using:
+   ```bash
+   python main.py
